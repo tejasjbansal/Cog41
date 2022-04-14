@@ -1,0 +1,69 @@
+Hadoop BigData Ubuntu 
+Contents
+Users	1
+Command	1
+How to Start a Shell or Use a service	2
+Service verifications 	2
+
+
+
+Users
+
+Ubuntu 
+user:- ubh01 
+Password :- root 
+Mysql 
+User:- root 
+Password:- password 
+User:- sqoop 
+Password:- password 
+
+
+Command
+
+To start hdfs service 
+$HADOOP_HOME/sbin/start-dfs.sh
+To stop hdfs service 
+$HADOOP_HOME/sbin/stop-dfs.sh
+To start yarn service 
+$HADOOP_HOME/sbin/start-yarn.sh
+To stop yarn service 
+$HADOOP_HOME/sbin/start-dfs.sh
+To start hbase service 
+$HBASE_HOME/bin/start-hbase.sh
+To stop hbaseservice 
+$HBASE_HOME/bin/stop-hbase.sh
+	jps(to see what all services are running)
+
+How to Start a Shell or Use a service
+Hive 
+hive
+Scala 
+scala
+Python 
+python
+Spark scala 
+spark-shell 
+Pyspark 
+pyspark
+Hbase 
+Hbase shell
+Mysql 
+Sudo mysql -u sqoop -p
+Sqoop 
+sqoop -version 
+Service verifications 
+
+To check if hdfs service are running or not 
+sudo jps 
+output 
+datanode
+namenode
+resourcemanager 
+
+Java 
+Java --version
+Scala
+Scala --version
+Python 
+python & then hit enter verify version and hit CTRL+D

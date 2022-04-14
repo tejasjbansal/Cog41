@@ -1,0 +1,12 @@
+hdfs dfs -mkdir /user/ubh01/
+hdfs dfs -mkdir /user/ubh01/cog41/
+hdfs dfs -put NYSE.csv /user/ubh01/cog41/
+
+hdfs dfs -ls /user/ubh01/cog41/
+
+$HADOOP_HOME/bin/hadoop jar myjar.jar StockVolume /user/ubh01/cog41/NYSE.csv /mapreduce_output
+
+
+hdfs dfs -ls /mapreduce_output
+hdfs dfs -cat /mapreduce_output/part-r-00000
+
