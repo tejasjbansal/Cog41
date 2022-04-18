@@ -1,0 +1,94 @@
+GA-123,70,7.00
+GA-223,60,8.02
+GA-123,72,9.10
+GA-223,63,10.05
+GA-123,75,11.20
+GA-123,70,13.00
+GA-223,65,15.02
+GA-123,65,16.10
+GA-223,60,18.05
+GA-223,75,19.20
+
+
+Offence.java
+
+find the offence % by each vehicle
+
+offence = speed > 65
+
+key = vehicle number
+value = speed
+
+Mapper<LongWritable,Text,Text,IntWritable>
+Reducer<Text,IntWritable,Text,DoubleWritable>
+
+GA-123,70
+GA-223,60
+GA-123,72
+GA-223,63
+GA-123,75
+GA-123,70
+GA-223,65
+GA-123,65
+GA-223,60
+GA-223,75
+
+GA-123, {70,72,75,70,65}
+GA-223, {60,63,65,60,75}
+
+job.setMapOutputKeyClass(Text.class)
+job.setMapOutputValueClass(IntWritable.class)
+
+job.setOutputKeyClass(Text.class)
+job.setOutputValueClass(DoubleWritable.class)
+
+
+
+public static class MapClass extends Mapper<LongWritable,Text,Text,IntWritable>
+	   {
+		 private Text Vehicle = new Text();
+		 private IntWritable Speed = new IntWritable();
+		 
+	      public void map(LongWritable key, Text value, Context context)
+	      {	    	  
+	    	  
+	         try{
+	            String[] str = value.toString().split(",");	 
+	            int speed = Integer.parseInt(str[1]);
+	            vehicle.set(str[0]);
+	            Speed.set(speed);
+	            
+
+	            context.write(Vehicle, Speed);
+	         }
+	         catch(Exception e)
+	         {
+	            System.out.println(e.getMessage());
+	         }
+	      }
+	   }
+
+  public static class ReduceClass extends Reducer<Text,IntWritable,Text,DoubleWritable>
+	   {
+		    private DoubleWritable result = new DoubleWritable();
+		    
+		    public void reduce(Text key, Iterable<IntWritable> values,Context context) throws IOException, InterruptedException {
+				double off_count = 0;
+				double total_count = 0;
+				double off_percent = 0;
+
+				for (IntWritable value : values) {
+					if (value.get() > 65)
+					{
+					  off_count++;	
+					}
+					total_count++;
+				}
+				off_percent = (off_count*100)/total_count;
+				result.set(off_percent);
+
+		      context.write(key, result);
+		      
+		      
+		    }
+	   }
