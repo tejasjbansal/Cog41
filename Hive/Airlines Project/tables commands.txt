@@ -1,0 +1,47 @@
+
+								Create Table and Load data commands
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+create table airport(airport_id int,name varchar(50),city varchar(50),country varchar(50),iata varchar(5),icao varchar(5),latitude double,logitude double,altitude int,timezone double,dst string,tz string) row format delimited fields terminated by ',' stored as textfile;
+
+load data local inpath 'airports_mod.dat' overwrite into table airport
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+create table air_lines(Airline int,Name string,Alias string,IATA string,ICAO string,Callsign string,Country string,Active string) row format delimited fields terminated by ',' stored as textfile;
+
+load data local inpath 'Final_airlines' overwrite into table air_lines
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+create table routes(Airline string,Airline_id int,Source_airport string,Source_airport_ID int,Destination_airport string,Destination_airport_ID int,Codeshare string,Stops int,Equipment string) row format delimited fields terminated by ',' stored as textfile;
+
+load data local inpath 'routes.dat' overwrite into table routes
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+									Queries of Problem Statements
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+select name from airport where trim(lower(country)) = 'india';
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+select distinct al.name from air_lines al full outer join routes r on al.airline=r.airline_id where r.stops=0;
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+select distinct al.name from air_lines al full outer join routes r on al.airline=r.airline_id where trim(upper(r.codeshare))='Y';
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+select country,count(airport_id) as cnt from airport group by country having cnt in 
+(select max(total) from (select country,count(airport_id) as total from airport group by country) abc);
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+select distinct a.name from air_lines a join routes r on a.airline = r.airline_id 
+join airport ar1 on ar1.airport_id = r.source_airport_id join 
+airport ar2 on ar2.airport_id = r.destination_airport_id 
+where trim(upper(ar1.country)) = "UNITED STATES" or trim(upper(ar2.country)) = "UNITED STATES";
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
