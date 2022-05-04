@@ -1,0 +1,169 @@
+In Mysql
+create database my_db;
+use my_db;
+
+CREATE TABLE topten(
+   customer_id INT NOT NULL ,
+   fname VARCHAR(40) NOT NULL,
+   lname VARCHAR(40) NOT NULL,
+   age int NOT NULL,
+   profession VARCHAR(40) NOT NULL,
+   amount double NOT NULL
+   );
+
+CREATE TABLE student_master(
+   student_id INT NOT NULL AUTO_INCREMENT,
+   name VARCHAR(40) NOT NULL,
+   address VARCHAR(40) NOT NULL,
+   PRIMARY KEY ( student_id ));
+
+CREATE TABLE fy(
+   fy_id INT NOT NULL AUTO_INCREMENT,
+   student_id INT NOT NULL,
+   result double NOT NULL,
+   PRIMARY KEY (fy_id ));
+
+
+show tables;
+
+describe student_master;
+
+INSERT INTO student_master 
+     (name, address)
+     VALUES
+    ("Sanjay", "Bangalore");
+INSERT INTO student_master 
+     (name, address)
+     VALUES
+    ("Rajiv", "Delhi");
+
+INSERT INTO student_master 
+     (name, address)
+     VALUES
+    ("Rajesh", "Chennai");
+INSERT INTO student_master 
+     (name, address)
+     VALUES
+    ("Sandeep", "Delhi");
+
+INSERT INTO fy 
+     (student_id, result)
+     VALUES
+    (1, 81.90);
+INSERT INTO fy 
+     (student_id, result)
+     VALUES
+    (2, 78.90);
+
+INSERT INTO topten
+( customer_id,fname,lname,age,profession, amount)
+Values
+(4009485,'Stuart','House',58,'Teacher',1943.85);
+
+INSERT INTO topten
+( customer_id,fname,lname,age,profession, amount)
+Values
+(4006425,'Joe','Burns',30,'Economist',1732.09);
+
+
+LIST DATABASES
+-------------
+sqoop list-databases --connect jdbc:mysql://localhost --username root --password 'password';
+
+LIST TABLES in a database
+--------------------------
+sqoop list-tables --connect jdbc:mysql://127.0.0.1/my_db --username root --password 'password';
+
+
+
+
+
+
+
+
+Import one table (with key)from mysql into HDFS
+------------------------------------------------
+sqoop import --connect jdbc:mysql://localhost/my_db --username root --password 'password' --table student_master --target-dir sqoop/student;
+
+
+
+
+Add an extra record in mysql in my_db
+INSERT INTO student_master 
+     (name, address)
+     VALUES
+    ("Mark", "Bangalore");
+
+WITH INCREMENTAL
+
+sqoop import --connect jdbc:mysql://localhost/my_db --username root --password 'password' --table student_master --check-column student_id --incremental append --last-value  7 --target-dir sqoop/student; 
+
+
+
+WITH WHERE CLAUSE
+----------------
+sqoop import --connect jdbc:mysql://localhost/my_db --username root --password 'password' --table student_master --where 'student_id < 3' --columns "student_id,name" --target-dir sqoop/query -m 1 ;
+
+WITH COLUMN CLAUSE
+sqoop import --connect jdbc:mysql://localhost/my_db --username root --password 'password' --table student_master --columns "student_id,name"  --target-dir sqoop/querycol -m 1;
+
+WITH QUERY
+sqoop import --connect jdbc:mysql://localhost/my_db --username root --password 'password' --query 'select a.student_id, name, address, coalesce(result,0) from student_master a left outer join fy b on a.student_id = b.student_id where $CONDITIONS' --target-dir sqoop/query1 -m 1;
+
+sqoop import --connect jdbc:mysql://localhost/my_db --username root --password 'password' --query 'select * from student_master where address = "Delhi" and $CONDITIONS' --target-dir sqoop/query2 -m 1;
+
+sqoop import --connect jdbc:mysql://localhost/my_db --username root --password 'password' --query 'select address, count(student_id) from student_master where $CONDITIONS group by address' --target-dir sqoop/query4 -m 1;
+
+
+
+Import all tables from mysql into hdfs       
+---------------------------------------
+sqoop import-all-tables --connect jdbc:mysql://localhost/my_db --username root --password 'password' --warehouse-dir sqoop/all_tables -m 1 ; 
+
+
+Import data into hive managed tables
+
+
+sqoop import --connect jdbc:mysql://localhost/my_db --username  root --password 'password' --table student_master --hive-import --hive-table training004.mystudent -m 1;
+
+
+
+sqoop export command
+
+gedit employee.txt
+
+1201,satish,delhi
+1202,krishna,mumbai
+1203,amith,pune
+1204,javed,chennai
+1205,prudvi,bangalore
+
+hadoop fs -put employee.txt  
+
+
+
+
+gedit emp1.txt
+1201,satish1,delhi
+1202,krishna1,mumbai
+1206,sanjay,pune
+1207,rajiv,chennai
+1208,vijay,bangalore
+
+hadoop fs -put emp1.txt 
+
+In MySQl
+use my_db;
+
+CREATE TABLE employee_master(
+   employee_id INT NOT NULL AUTO_INCREMENT,
+   name VARCHAR(40) NOT NULL,
+   address VARCHAR(40) NOT NULL,
+   PRIMARY KEY ( employee_id ));
+
+
+sqoop export --connect jdbc:mysql://localhost/my_db --username root --password 'password' --table employee_master --update-mode  allowinsert --update-key employee_id  --export-dir employee.txt --input-fields-terminated-by ',' ;
+
+sqoop export --connect jdbc:mysql://localhost/my_db --username root --password 'password' --table employee_master --update-mode  allowinsert --update-key employee_id   --export-dir emp1.txt --input-fields-terminated-by ',' ;
+
+
