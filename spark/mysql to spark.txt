@@ -1,0 +1,43 @@
+before launching spark-shell
+please upload mysql connector
+
+sudo cp /home/cloudera/mysql-connector-java-5.1.47-bin.jar /usr/lib/spark/lib
+
+sudo chmod 777 /usr/lib/spark/lib/mysql-connector-java-5.1.47-bin.jar
+
+
+spark-shell 
+
+val connection="jdbc:mysql://localhost/my_db"
+val mysql_props = new java.util.Properties
+mysql_props.setProperty("user","root")
+mysql_props.setProperty("password","password")
+
+val student = spark.read.jdbc(connection,"student_master",mysql_props)
+
+student.show
+student.count
+
+student.registerTempTable("student")
+
+val fy = spark.read.jdbc(connection,"fy",mysql_props)
+
+fy.registerTempTable("fy")
+
+val student_res = spark.sql("select a.student_id,name,address from student a join fy on fy.student_id = a.student_id")
+
+
+
+						
+student_res.show
+student_res.count
+
+
+to write data back to mysql
+----------------------------
+student_res.write.mode("append").jdbc(connection,"Student_res_status",mysql_props)
+
+in MYSQL
+
+select count(*) from Student_res_status;
+
