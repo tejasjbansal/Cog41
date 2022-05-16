@@ -1,0 +1,32 @@
+copy the hive-site file from hive/conf folder to spark/conf
+------------------------------------------------------
+
+$ sudo cp /usr/lib/hive/conf/hive-site.xml /usr/lib/spark/conf/
+
+$ sudo chmod 777 /usr/lib/spark/conf/hive-site.xml
+
+spark-shell
+
+
+val customers = spark.sql("select * from cog41.txnrecords")
+
+customers.count
+
+customers.collect.foreach(println);
+
+customers.registerTempTable("customer");
+
+val sales = spark.sql("select * from cog41.txnrecords")
+
+sales.registerTempTable("sales")
+
+find top10 buyers
+
+val top10buyers = spark.sql("select s.custno, firstname, lastname, age, profession, round(sum(amount),2) as total from sales s left outer join customer c on s.custno=c.custno group by s.custno, firstname, lastname, age, profession order by total desc limit 10") 
+
+
+
+write result back to hive
+--------------------------
+top10buyers.write.mode("overwrite").saveAsTable("cog41.toptenBuyers");
+
