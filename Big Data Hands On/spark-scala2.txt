@@ -1,0 +1,222 @@
+calculate total revenue per year and mark the year which is highest total revenue
+----------------------------------------------------------------------------------
+val revRDD = newlines.map(x => (x.split(",")(0), (x.split(",")(2).toDouble)*(x.split(",")(3).toLong)   ))
+
+val revRDD = newlines.map(x => (x.split(",")(0), BigDecimal( (x.split(",")(2).toDouble)*(x.split(",")(3).toLong) )  )) 
+
+val yearRDD = revRDD.reduceByKey((a,b) => (a+b));
+val sortbyval = yearRDD.collect.sortBy(a => (-a._2))
+sortbyval.foreach(println)
+
+find the year which had the highest number of passengers 
+--------------------------------------------------------
+val passRDD = newlines.map(x => (x.split(",")(0), x.split(",")(3).toLong ))
+val yearRDD = passRDD.reduceByKey((a,b) => (a+b));
+val sortbyval = yearRDD.collect.sortBy(a => (-a._2))
+sortbyval.foreach(println)
+
+2007	176299
+
+
+6.log file
+---------
+val lines = sc.textFile("file:/home/cloudera/mapred-hduser-historyserver-ubuntu.log")
+val lines_lower = lines.map(a => a.toLowerCase());
+val errors = lines_lower.filter(a => a.contains("error"))
+errors.cache()
+errors.filter(a => a.contains("sigterm")).count()
+errors.filter(a => a.contains("jobhistoryserver")).count()
+
+errors.unpersist()
+
+
+7.Mapping customer table to Profession and record => SQL counting the number of customers per profession;(sort on value)
+and find top ten professions on count.
+------------------------------------------------
+val custRDD = sc.textFile("file:/home/cloudera/custs.txt")
+
+val professionRDD = custRDD.map(x => (x.split(",")(4), 1))
+professionRDD.take(10).foreach(println)
+
+
+val professioncounts = professionRDD.reduceByKey((a,b) => a+b);
+professioncounts.foreach(println);
+
+val sortbyval = professioncounts.collect.sortBy(-_._2);
+
+OR
+
+val sortbyval = professioncounts.collect.sortBy(a => -a._2);
+
+val top10prof = sortbyval.take(10);
+
+sc.parallelize(sortbyval).saveAsTextFile("hdfs://quickstart.cloudera:8020/user/cloudera/profession_count");
+
+
+
+8.1 calculating total amount spent by each customer and find top ten buyers
+------------------------------------------------------------------------
+val txnRDD = sc.textFile("file:/home/cloudera/txns1.txt")
+
+val CustMap = txnRDD.map(x => (x.split(",")(2), x.split(",")(3).toDouble ))
+
+CustMap.take(10).foreach(println);
+
+val custTotalSpent = CustMap.reduceByKey((a,b) => a+b);
+
+custTotalSpent.foreach(println);
+
+val sortbyval = custTotalSpent.collect.sortBy(a => -a._2);
+
+val top10 = sortbyval.take(10);
+
+top10.foreach(println);
+
+
+val top10RDD =sc.parallelize(top10)
+
+val custRDD1 = sc.textFile("file:/home/cloudera/custs.txt")
+
+val custRDD11 = custRDD1.map(x => (x.split(",")(0), x.split(",")(1)))
+
+val joined = top10RDD.leftOuterJoin(custRDD11).map { case (a, (b, c: Option[String])) => (a, (b, (c.getOrElse("unknown")))) }
+
+joined.foreach(println);
+
+val sortbyval2 = joined.collect.sortBy(a => -a._2._1);
+
+OR
+
+//removing round bracket
+val transform = joined.map{case (a,b) => (a, (b.x._1+","+b.x._2))};
+
+val transform2 = transform.map( x => (x._1 + "," + x._2))
+
+
+val transform3 = transform2.map(x => (x.split(",")(0) + "," + x.split(",")(2), x.split(",")(1).toDouble ))
+
+val sortbyval2 = transform3.collect.sortBy(-_._2);
+
+sortbyval2.foreach(println)
+
+sc.parallelize(sortbyval2).saveAsTextFile("spark1-topten");
+
+
+
+8.2 find the top ten products amount wise
+-----------------------------------------
+val txnRDD = sc.textFile("file:/home/cloudera/txns1.txt")
+val ProdRDD = txnRDD.map(x => (x.split(",")(5), x.split(",")(3).toDouble ))
+val ProdTotalSpent = ProdRDD.reduceByKey((a,b) => a+b)
+val sortbyval = ProdTotalSpent.collect.sortBy(-_._2)
+sortbyval.take(10).foreach(println)
+
+
+9.Find out the customer I.D for the customer who has spent the maximum amount in a single transaction. 
+------------------------------------------------------------------------------------------------------
+val retailRDD = sc.textFile("file:/home/cloudera/Retail")
+
+retailRDD.count()
+
+val retail = retailRDD.map(line => line.split(";").map(a =>a.trim))
+
+val reqDet = retail.map(x=>x(8).toInt)
+
+//val reqDet = retailRDD.map(line => (line.split(";")(8).toInt))
+
+
+reqDet.foreach(println);
+
+val maxAmount = reqDet.max
+
+val cusDet = retail.filter(x=>x(8).toInt == maxAmount)
+
+cusDet.collect
+
+cusDet.map(x=>x(1)).collect
+
+
+9.1 Find out the top 10 viable products 
+----------------------------------------
+val retailRDD = sc.textFile("file:/home/cloudera/Retail")
+
+val retail = retailRDD.map(line => line.split(";").map(_.trim))
+
+val reqDet = retail.map(x=> (x(5), (x(8).toInt - x(7).toInt)))
+
+val profitforproduct = reqDet.reduceByKey((a,b) => a+b)
+
+profitforproduct.foreach(println)
+
+val sortbyval = profitforproduct.collect.sortBy(-_._2)
+
+OR
+
+val sortbyval = profitforproduct.collect.sortBy(x => -x._2)
+
+val top10 = sortbyval.take(10);
+
+top10.foreach(println)
+
+total profit earned for the store
+---------------------------------
+val totalprofit = profitforproduct.reduce((a,b) => ("Total", (a._2 + b._2)))
+     
+
+
+Loss making products
+---------------------
+val lossMKProd = profitforproduct.filter( x => x._2 < 0) 
+
+val netloss = lossMKProd.reduce((a,b) => ("Total_Loss", (a._2 + b._2)))
+
+val lossMKProd2 = lossMKProd.collect.sortBy(x => x._2)
+
+lossMKProd2.foreach(println)
+
+
+9.2 find the age wise sales
+---------------------------
+val retailRDD = sc.textFile("file:/home/cloudera/Retail")
+
+val retail = retailRDD.map(line => line.split(";").map(_.trim))
+
+val ageRDD = retail.map(x=> (x(2), x(8).toInt))
+
+val agewiseSales = ageRDD.reduceByKey((a,b) => a+b)
+
+val sortbyval = agewiseSales.collect.sortBy(-_._2)
+
+sortbyval.foreach(println)
+
+
+
+9.3 find out the net margin% for each product
+----------------------------------------
+val retailRDD = sc.textFile("file:/home/cloudera/Retail")
+
+val retail = retailRDD.map(line => line.split(";").map(_.trim))
+
+val sales = retail.map(x=> (x(5),(x(8).toInt)))
+
+val totalsales = sales.reduceByKey((a,b) => a+b);
+
+//totalsales.foreach(println);
+
+val purchase = retail.map(x=> (x(5),(x(7).toInt)))
+
+val totalpurchase = purchase.reduceByKey((a,b) => a+b);
+
+val non_zero_purchase = totalpurchase.filter( x => (x._2 != 0))
+
+
+//totalpurchase.foreach(println);
+
+val joined = totalsales.join(non_zero_purchase)
+
+val netmargin = joined.map(pair => (pair._1, ((pair._2._1 - pair._2._2)*100/pair._2._2).toDouble ))
+
+val top10_margin = netmargin.collect.sortBy(-_._2)
+
+top10_margin.take(10).foreach(println) 
+

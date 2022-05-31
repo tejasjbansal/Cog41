@@ -1,0 +1,97 @@
+Spark-SQL on custs.txt and txns1.txt Data
+---------
+
+
+case class cust(custid:Long, fisrtname:String, lastname:String, age:Int, designation:String) ; 
+
+case class trans(txnid:Long, txndate:String, custid:Long, amount:Double, category:String, product:String, city:String, state:String, spendby:String);
+
+
+val custRDD = sc.textFile("file:/home/ubh01/cog41/Mapreduce/Data/custs.txt")
+val transRDD = sc.textFile("file:/home/ubh01/cog41/Mapreduce/Data/txns1.txt")
+
+
+val custArray = custRDD.map(a =>a.split(","))
+val transArray = transRDD.map(a =>a.split(","))
+
+val custObjRDD = custArray.map(v => cust(v(0).toLong,v(1).trim,v(2).trim,v(3).toInt,v(4).trim))
+val transObjRDD = transArray.map(v => trans(v(0).toLong,v(1).trim,v(2).toLong,v(3).toDouble,v(4).trim,v(5).trim,v(6).trim,v(7).trim,v(8).trim))
+
+val custDF = custObjRDD.toDF
+val transDF = transObjRDD.toDF
+
+custDF.printSchema
+transDF.printSchema
+
+custDF.show
+transDF.show
+
+custDF.registerTempTable("sql_cust");
+transDF.registerTempTable("sql_trans");
+
+top 10 customers with their name
+-----------------------------------
+val top10cust = spark.sql("select sql_cust.custid,sql_cust.fisrtname,count(sql_trans.txnid) as trans from sql_trans join sql_cust on sql_cust.custid=sql_trans.custid group by sql_cust.custid,sql_cust.fisrtname order by trans desc limit 10")
+
+top10cust.show
+
++-------+---------+-----+                                                       
+| custid|fisrtname|trans|
++-------+---------+-----+
+|4006606|   Jackie|   16|
+|4005991|    Kerry|   14|
+|4009485|   Stuart|   14|
+|4000815|    Julie|   14|
+|4007493|     Marc|   13|
+|4002033|     Dean|   13|
+|4002572|     Brad|   13|
+|4007006|   Maxine|   13|
+|4000221|   Glenda|   13|
+|4001056|    Debra|   13|
++-------+---------+-----+
+
+
+top 10 products
+-----------------------------------
+var top10prod = spark.sql("select sql_trans.product,count(sql_trans.txnid) as trans from sql_trans group by sql_trans.product order by trans desc limit 10")
+
+top10prod.show
+
++--------------------+-----+
+|             product|trans|
++--------------------+-----+
+|          Lawn Games|  466|
+|          Swing Sets|  464|
+|                Golf|  452|
+|Cardio Machine Ac...|  445|
+|      Yoga & Pilates|  444|
+|             Mahjong|  437|
+|              Hockey|  434|
+|          Basketball|  431|
+|              Boxing|  431|
+| Weightlifting Belts|  429|
++--------------------+-----+
+
+
+top 10 cities
+-----------------------------------
+var top10city = spark.sql("select sql_trans.city,count(sql_trans.txnid) as trans from sql_trans group by sql_trans.city order by trans desc limit 10")
+
+top10city.show
+
++-----------+-----+                                                             
+|       city|trans|
++-----------+-----+
+|   Pasadena|  939|
+|   Columbia|  920|
+|Kansas City|  912|
+|   Columbus|  906|
+|    Buffalo|  507|
+|    Detroit|  492|
+| Cincinnati|  489|
+| Long Beach|  482|
+|    Oakland|  480|
+| Washington|  479|
++-----------+-----+
+
+

@@ -1,0 +1,44 @@
+Import data into hive managed tables
+
+
+sqoop import --connect jdbc:mysql://localhost/my_db --username  root --password 'password' --table student_master --hive-import --hive-table cog41.mystudent -m 1;
+
+
+
+sqoop export command
+
+gedit employee.txt
+
+1201,satish,delhi
+1202,krishna,mumbai
+1203,amith,pune
+1204,javed,chennai
+1205,prudvi,bangalore
+
+hadoop fs -put employee.txt  
+
+
+
+
+gedit emp1.txt
+1201,satish1,delhi
+1202,krishna1,mumbai
+1206,sanjay,pune
+1207,rajiv,chennai
+1208,vijay,bangalore
+
+hadoop fs -put emp1.txt 
+
+In MySQl
+use my_db;
+
+CREATE TABLE employee_master(
+   employee_id INT NOT NULL AUTO_INCREMENT,
+   name VARCHAR(40) NOT NULL,
+   address VARCHAR(40) NOT NULL,
+   PRIMARY KEY ( employee_id ));
+
+
+sqoop export --connect jdbc:mysql://localhost/my_db --username root --password 'password' --table employee_master --update-mode  allowinsert --update-key employee_id  --export-dir employee.txt --input-fields-terminated-by ',' ;
+
+sqoop export --connect jdbc:mysql://localhost/my_db --username root --password 'password' --table employee_master --update-mode  allowinsert --update-key employee_id   --export-dir emp1.txt --input-fields-terminated-by ',' ;
